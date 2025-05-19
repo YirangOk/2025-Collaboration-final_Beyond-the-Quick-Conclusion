@@ -1,0 +1,380 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Beyond the Quick Conclusion</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif
+    }
+
+    :root {
+      --bg: #0e0e0f;
+      --panel: #2b2b2d;
+      --panel-border: #3c3c3e;
+      --text: #e6e6e7;
+      --muted: #9b9b9d;
+      --blue: #3662ff;
+      --blue-dark: #2647cc
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px;
+      gap: 42px
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      text-align: center
+    }
+
+    #chat-box {
+      width: 100%;
+      max-width: 760px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px
+    }
+
+    label {
+      font-size: .95rem;
+      color: var(--muted)
+    }
+
+    #prompt {
+      width: 100%;
+      font-size: 1.15rem;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      outline: none;
+      padding-top: 4px;
+      padding-bottom: 12px
+    }
+
+    .pills {
+      display: flex;
+      gap: 14px
+    }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      font-size: .95rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: .15s
+    }
+
+    .pill svg {
+      width: 18px;
+      height: 18px
+    }
+
+    .pill.active {
+      background: var(--blue);
+      color: #fff
+    }
+
+    .pill:not(.active) {
+      background: transparent;
+      border-color: var(--muted);
+      color: var(--text)
+    }
+
+    .pill:not(.active):hover {
+      border-color: var(--blue);
+      color: var(--blue)
+    }
+
+    .nav {
+      display: flex;
+      gap: 32px;
+      font-size: .9rem;
+      padding-bottom: 4px;
+      color: var(--text)
+    }
+
+    .nav span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer
+    }
+
+    .nav span::before {
+      content: "○";
+      /* 기본은 빈 원 */
+      margin-right: 6px;
+      font-size: 1rem;
+      color: var(--text-muted);
+      /* 회색 */
+      transition: .15s;
+    }
+
+    .nav span.active::before {
+      content: "●";
+      /* 클릭(활성) 시 꽉 찬 원 */
+      color: var(--blue);
+      /* 파란색(원하면 #fff 로 교체) */
+    }
+
+    .nav span:hover::before {
+      color: var(--blue);
+      /* 호버에도 색만 파랗게 */
+    }
+
+    #send {
+      align-self: flex-end;
+      margin-top: 4px;
+      background: var(--blue);
+      border: none;
+      color: #fff;
+      padding: 11px 26px;
+      border-radius: 9999px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .15s
+    }
+
+    #send:hover {
+      background: var(--blue-dark)
+    }
+
+    #messages {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      max-height: 46vh;
+      overflow-y: auto;
+      padding-right: 4px
+    }
+
+    .msg {
+      white-space: pre-line;
+      font-size: 1rem;
+      line-height: 1.5em
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 16px 16px 0 16px;
+      padding: 12px 16px;
+      max-width: 85%
+    }
+
+    .msg.ai {
+      align-self: flex-start;
+      background: #1b1b1d;
+      color: var(--text);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px 16px 16px 0;
+      padding: 12px 16px;
+      max-width: 85%
+    }
+
+    .loading {
+      opacity: .6;
+      font-style: italic
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 18px
+    }
+
+    .card {
+      border: 1px solid var(--panel-border);
+      background: #1b1b1d;
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .card a {
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 600
+    }
+
+    .card span {
+      font-size: .8rem;
+      color: var(--muted)
+    }
+  </style>
+</head>
+
+<body>
+  <h1>What can I help with?</h1>
+
+  <div id="chat-box">
+    <label for="prompt">Ask anything</label>
+    <input id="prompt" autocomplete="off" />
+
+    <div class="pills">
+      <div class="pill active" data-mode="self_reflect">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M12 5a7 7 0 0 0-7 7c0 1.5.5 3 1.4 4.2l-1.4 4 4-1.4A7 7 0 1 0 12 5z" /></svg>
+        Self reflect
+      </div>
+      <div class="pill" data-mode="build_together">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33-1.82l-1.43-4a1.65 1.65 0 0 0-1-1l-4-1.43a1.65 1.65 0 0 0-1.82.33l-3 3a1.65 1.65 0 0 0-.33 1.82l1.43 4a1.65 1.65 0 0 0 1 1l4 1.43a1.65 1.65 0 0 0 1.82-.33z" />
+          </svg>
+        Build together
+      </div>
+      <div class="pill" data-mode="challenge_me">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+        Challenge me!
+      </div>
+    </div>
+
+    <div class="nav">
+      <span data-type="articles">Articles</span>
+      <span data-type="books">Books</span>
+      <span data-type="experts">Contacts of an expert</span>
+    </div>
+
+    <button id="send">Send</button>
+  </div>
+
+  <div id="messages"></div>
+  <div id="cards" class="cards"></div>
+
+  <script>
+    const pills = document.querySelectorAll('.pill');
+    let mode = 'self_reflect';
+    pills.forEach(p => p.onclick = () => {
+      pills.forEach(e => e.classList.remove('active'));
+      p.classList.add('active');
+      mode = p.dataset.mode;
+    });
+    const input = document.getElementById('prompt'),
+      sendBtn = document.getElementById('send'),
+      messages = document.getElementById('messages'),
+      cards = document.getElementById('cards');
+    let lastQuery = "";
+
+    function addMsg(t, who = 'ai') {
+      const d = document.createElement('div');
+      d.className = `msg ${who}`;
+      d.textContent = t;
+      messages.appendChild(d);
+      messages.scrollTop = messages.scrollHeight;
+    }
+    async function send() {
+      const text = input.value.trim();
+      if (!text) return;
+      lastQuery = text;
+      addMsg(text, 'user');
+      input.value = '';
+      const load = document.createElement('div');
+      load.className = 'msg ai loading';
+      load.textContent = '…';
+      messages.appendChild(load);
+      try {
+        const r = await fetch('/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text,
+            mode
+          })
+        });
+        const d = await r.json();
+        load.remove();
+        if (d.error) {
+          addMsg('Error: ' + d.error, 'ai');
+          return;
+        }
+        addMsg(d.response, 'ai');
+      } catch {
+        load.remove();
+        addMsg('Server unreachable.', 'ai');
+      }
+    }
+    sendBtn.onclick = send;
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        send();
+      }
+    });
+    document.querySelectorAll('.nav span').forEach(n => n.onclick = () => loadRes(n.dataset.type));
+    async function loadRes(type) {
+      if (!lastQuery) return;
+      cards.innerHTML = '';
+      const r = await fetch('/resources', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: lastQuery,
+          resource_type: type
+        })
+      });
+      const {
+        resources,
+        error
+      } = await r.json();
+      if (error) {
+        return;
+      }
+      resources.forEach(it => {
+        const c = document.createElement('div');
+        c.className = 'card';
+        c.innerHTML = `<a href="${it.url}" target="_blank">${it.title}</a>
+                 <span>${it.source}</span><p>${it.summary||''}</p>`;
+        cards.appendChild(c);
+      });
+    }
+
+    document.querySelectorAll('.nav span').forEach(el => {
+      el.onclick = () => {
+        document.querySelectorAll('.nav span').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        loadRes(el.dataset.type);
+      };
+    });
+  </script>
+</body>
+
+</html>
