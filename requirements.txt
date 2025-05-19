@@ -2,3 +2,4 @@ Flask==2.2.5
 openai
 flask_cors
 python-dotenv
+requests
